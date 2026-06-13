@@ -37,3 +37,9 @@ export interface DbMetric {
   table: string;
   count: number;
 }
+
+export interface AuthenticatedUser {
+  userId: number;
+  name: string;
+  email: string;
+}

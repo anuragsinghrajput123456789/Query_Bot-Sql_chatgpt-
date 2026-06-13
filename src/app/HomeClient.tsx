@@ -2,6 +2,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import Link from 'next/link';
 import { Message, HistoryItem, DbMetric, BusinessInsights } from '@/types';
 import HistorySidebar from '@/components/history/HistorySidebar';
 import ChatWindow from '@/components/chat/ChatWindow';
@@ -10,6 +11,7 @@ import Explanation from '@/components/sql/Explanation';
 import DataViewer from '@/components/sql/DataViewer';
 import DataVisualizer from '@/components/sql/DataVisualizer';
 import UploadModal from '@/components/ui/UploadModal';
+import LogoutButton from '@/components/auth/LogoutButton';
 import {
   Database,
   AlertTriangle,
@@ -22,7 +24,10 @@ import {
   Sparkles,
   PanelRightOpen,
   ArrowRight,
+  Home,
+  UserRound,
 } from 'lucide-react';
+import { AuthenticatedUser } from '@/types';
 
 let idCounter = 0;
 function generateUniqueId(): string {
@@ -44,7 +49,11 @@ interface BotQueryResult {
 
 type SectionKey = 'overview' | 'workspace' | 'history' | 'insights';
 
-export default function HomeClient() {
+interface HomeClientProps {
+  user: AuthenticatedUser;
+}
+
+export default function HomeClient({ user }: HomeClientProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [metrics, setMetrics] = useState<DbMetric[]>([]);
@@ -348,6 +357,14 @@ export default function HomeClient() {
             </div>
 
             <div className="flex items-center gap-2">
+              <Link
+                href="/"
+                className="hidden items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-white transition-all duration-200 hover:border-white/20 hover:bg-white/10 md:flex"
+              >
+                <Home size={14} />
+                Home
+              </Link>
+
               <button
                 onClick={() => setIsUploadOpen(true)}
                 className="hidden items-center gap-1.5 rounded-xl border border-indigo-400/25 bg-indigo-500/10 px-3 py-2 text-xs font-semibold text-indigo-100 shadow-sm shadow-indigo-900/20 transition-all duration-200 hover:border-indigo-300/45 hover:bg-indigo-500/20 active:scale-[0.98] sm:flex"
@@ -365,6 +382,19 @@ export default function HomeClient() {
                 <Database size={12} />
                 <span>querygpt.db</span>
               </div>
+
+              <div className="hidden items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] text-slate-200 lg:flex">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-white/5 text-sky-200">
+                  <UserRound size={13} />
+                </span>
+                <span className="max-w-[160px] truncate font-medium">{user.name}</span>
+              </div>
+
+              <LogoutButton
+                className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-white transition-all duration-200 hover:border-white/20 hover:bg-white/10"
+                redirectTo="/"
+                compact
+              />
             </div>
           </div>
 

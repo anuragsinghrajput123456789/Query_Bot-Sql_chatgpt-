@@ -1,8 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { openReadWriteDb } from '@/lib/db/sqlite';
+import { getSessionFromRequest } from '@/lib/auth/session';
 
 export async function POST(req: NextRequest) {
   try {
+    const session = await getSessionFromRequest(req);
+    if (!session) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     const { tableName, columns, rows } = await req.json();
 
     if (!tableName || !columns || !rows || !Array.isArray(columns) || !Array.isArray(rows)) {

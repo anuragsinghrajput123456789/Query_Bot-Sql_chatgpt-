@@ -2,9 +2,18 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getDbSchema, runReadOnlyQuery, saveHistory } from '@/lib/db/sqlite';
 import { generateSqlAndExplanation, generateBusinessInsights } from '@/lib/ai/gemini';
 import { validateSqlQuery } from '@/lib/security/safety';
+import { getSessionFromRequest } from '@/lib/auth/session';
 
 export async function POST(req: NextRequest) {
   try {
+    const session = await getSessionFromRequest(req);
+    if (!session) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     const body = await req.json();
     const { question } = body;
 
@@ -97,6 +106,7 @@ export async function POST(req: NextRequest) {
     // We log it even if SQLite threw a query error (e.g. column not found), so that users can review the history.
     try {
       await saveHistory(
+        session.userId,
         question.trim(),
         sql,
         executionTimeMs,

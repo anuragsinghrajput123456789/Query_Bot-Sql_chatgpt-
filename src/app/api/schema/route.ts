@@ -1,13 +1,22 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getDbSchema, runReadOnlyQuery } from '@/lib/db/sqlite';
+import { getSessionFromRequest } from '@/lib/auth/session';
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    const session = await getSessionFromRequest(req);
+    if (!session) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     const schema = await getDbSchema();
 
     // Fetch table names dynamically from sqlite_master
     const tableRows = await runReadOnlyQuery(
-      "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name != 'query_history'"
+      "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT IN ('query_history', 'app_users')"
     );
     const tables = tableRows.map((row) => row.name as string);
     
