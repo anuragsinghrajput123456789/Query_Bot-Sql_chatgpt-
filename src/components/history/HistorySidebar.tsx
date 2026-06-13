@@ -32,12 +32,12 @@ export default function HistorySidebar({
   };
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-card-border bg-card-bg/90 shadow-2xl shadow-black/20 backdrop-blur-xl select-none">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[24px] border border-card-border bg-card-bg/90 shadow-2xl shadow-black/20 backdrop-blur-xl select-none">
       {/* DB Metrics Section */}
-      <div className="shrink-0 border-b border-border-muted bg-white/3 p-4">
+      <div className="shrink-0 border-b border-border-muted bg-white/4 p-4">
         <div className="mb-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-sky-400/20 bg-sky-400/10 text-sky-200">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-sky-400/20 bg-sky-400/10 text-sky-200">
               <Database size={15} />
             </div>
             <div>
@@ -48,16 +48,16 @@ export default function HistorySidebar({
           <button 
             onClick={onRefreshMetrics}
             title="Refresh statistics"
-            className="rounded-lg border border-white/7 bg-white/5 p-2 text-text-muted transition-all duration-200 hover:rotate-45 hover:border-sky-400/30 hover:bg-sky-400/8 hover:text-sky-200 cursor-pointer active:scale-95"
+            className="rounded-xl border border-white/7 bg-white/5 p-2 text-text-muted transition-all duration-200 hover:rotate-45 hover:border-sky-400/30 hover:bg-sky-400/8 hover:text-sky-200 cursor-pointer active:scale-95"
           >
             <RefreshCw size={12} />
           </button>
         </div>
 
         {/* Database statistics metrics list */}
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-2.5">
           {metrics.length === 0 ? (
-            <div className="col-span-2 text-center py-2 text-[10px] text-text-muted">
+            <div className="col-span-2 rounded-2xl border border-white/6 bg-white/3 py-3 text-center text-[10px] text-text-muted">
               Loading db metrics...
             </div>
           ) : (
@@ -70,7 +70,7 @@ export default function HistorySidebar({
               return (
                 <div 
                   key={m.table}
-                  className={`flex flex-col rounded-lg border px-2.5 py-2 transition-all duration-200 hover:-translate-y-0.5 ${
+                  className={`flex flex-col rounded-xl border px-3 py-2.5 transition-all duration-200 hover:-translate-y-0.5 ${
                     isUploaded 
                       ? 'border-sky-400/35 bg-sky-500/8 shadow-sm shadow-sky-950/20' 
                       : 'border-border-muted bg-background/70 hover:border-white/12 hover:bg-white/4'
@@ -98,7 +98,7 @@ export default function HistorySidebar({
         {/* Upload Custom Data Button */}
         <button
           onClick={onOpenUpload}
-          className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl border border-sky-400/25 bg-sky-500/10 px-3 py-2.5 text-xs font-semibold text-sky-100 shadow-sm shadow-sky-950/20 transition-all duration-200 hover:-translate-y-0.5 hover:border-sky-300/40 hover:bg-sky-500/18 hover:text-white cursor-pointer active:scale-[0.98]"
+          className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-2xl border border-sky-400/25 bg-sky-500/10 px-3 py-3 text-xs font-semibold text-sky-100 shadow-sm shadow-sky-950/20 transition-all duration-200 hover:-translate-y-0.5 hover:border-sky-300/40 hover:bg-sky-500/18 hover:text-white cursor-pointer active:scale-[0.98]"
         >
           <Upload size={12} />
           <span>Upload CSV / Excel</span>
@@ -107,7 +107,7 @@ export default function HistorySidebar({
 
       {/* Query History Section */}
       <div className="flex-1 flex flex-col min-h-0">
-        <div className="flex shrink-0 items-center gap-2 border-b border-border-muted bg-white/2 px-4 py-3">
+        <div className="flex shrink-0 items-center gap-2 border-b border-border-muted bg-white/3 px-4 py-3">
           <History size={16} className="text-sky-300" />
           <span className="text-xs font-semibold uppercase tracking-wider text-foreground">Query History</span>
           <span className="ml-auto rounded-full border border-white/7 bg-white/5 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-text-muted">
@@ -116,9 +116,9 @@ export default function HistorySidebar({
         </div>
 
         {/* History Item list */}
-        <div className="flex-1 space-y-1.5 overflow-y-auto p-2">
+        <div className="flex-1 space-y-2 overflow-y-auto p-3">
           {history.length === 0 ? (
-            <div className="flex flex-col items-center gap-1 py-8 text-center text-xs text-text-muted">
+            <div className="flex flex-col items-center gap-1 rounded-2xl border border-dashed border-white/8 bg-white/2 py-8 text-center text-xs text-text-muted">
               <ListCollapse size={20} className="opacity-40" />
               <span>No history logs</span>
               <span className="text-[10px] opacity-75">Run a query to see it here.</span>
@@ -130,10 +130,10 @@ export default function HistorySidebar({
                 <button
                   key={item.id}
                   onClick={() => onSelectHistory(item)}
-                  className={`flex w-full flex-col gap-1 rounded-xl border p-2.5 text-left transition-all duration-200 cursor-pointer hover:-translate-y-0.5 active:scale-[0.99] ${
+                  className={`flex w-full flex-col gap-1.5 rounded-2xl border p-3 text-left transition-all duration-200 cursor-pointer hover:-translate-y-0.5 active:scale-[0.99] ${
                     isActive
                       ? 'border-sky-400/40 bg-sky-500/10 shadow-sm shadow-sky-950/20'
-                      : 'border-transparent bg-transparent hover:border-white/7 hover:bg-white/4'
+                      : 'border-white/6 bg-white/[0.03] hover:border-white/10 hover:bg-white/[0.05]'
                   }`}
                 >
                   {/* User query */}

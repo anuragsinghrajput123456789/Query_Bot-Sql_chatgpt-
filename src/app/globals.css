@@ -44,6 +44,16 @@ body {
   overflow-x: hidden;
 }
 
+::selection {
+  background: rgba(56, 189, 248, 0.28);
+  color: var(--foreground);
+}
+
+:focus-visible {
+  outline: 2px solid rgba(56, 189, 248, 0.75);
+  outline-offset: 2px;
+}
+
 /* Custom Premium Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
@@ -138,6 +148,15 @@ body {
     radial-gradient(circle at 18% 14%, rgba(56, 189, 248, 0.18), transparent 24rem),
     radial-gradient(circle at 78% 20%, rgba(16, 185, 129, 0.12), transparent 22rem),
     radial-gradient(circle at 50% 100%, rgba(79, 70, 229, 0.1), transparent 26rem);
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
 .animate-fade-in {
