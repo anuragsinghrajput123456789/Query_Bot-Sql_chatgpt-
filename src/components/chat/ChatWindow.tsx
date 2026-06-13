@@ -49,17 +49,17 @@ export default function ChatWindow({ messages, isLoading, onSendMessage }: ChatW
   };
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-xl border border-card-border bg-card-bg/80 shadow-2xl shadow-black/20 backdrop-blur-xl">
+    <div className="flex h-full flex-col overflow-hidden rounded-[24px] border border-card-border bg-card-bg/85 shadow-2xl shadow-black/20 backdrop-blur-xl">
       {/* Panel Header */}
-      <div className="flex shrink-0 items-center gap-2 border-b border-border-muted bg-white/3 px-3 py-3 sm:px-4">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-sky-400/20 bg-sky-400/10 text-sky-200">
+      <div className="flex shrink-0 items-center gap-3 border-b border-border-muted bg-white/4 px-4 py-4">
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-sky-400/20 bg-sky-400/10 text-sky-200">
           <Terminal size={16} />
         </div>
         <div className="min-w-0">
           <span className="block truncate text-xs font-semibold uppercase tracking-wider text-foreground">Ask your database</span>
-          <span className="block text-[10px] text-text-muted">Natural language to safe SQLite</span>
+          <span className="block text-[10px] text-text-muted">Natural language to guarded SQLite queries</span>
         </div>
-        <div className="ml-auto flex shrink-0 items-center gap-1.5 rounded-full border border-white/7 bg-background/50 px-2.5 py-1">
+        <div className="ml-auto flex shrink-0 items-center gap-1.5 rounded-full border border-white/7 bg-background/60 px-2.5 py-1">
           <span className={`h-2 w-2 rounded-full ${isLoading ? 'bg-sky-400 animate-pulse' : 'bg-emerald-400'}`}></span>
           <span className="text-[10px] font-medium text-text-muted">{isLoading ? 'Thinking' : 'Ready'}</span>
         </div>
@@ -68,7 +68,7 @@ export default function ChatWindow({ messages, isLoading, onSendMessage }: ChatW
       {/* Messages Scroll Container */}
       <div 
         ref={scrollContainerRef}
-        className="flex-1 space-y-4 overflow-y-auto bg-grid-pattern p-3 sm:p-4"
+        className="flex-1 space-y-4 overflow-y-auto bg-grid-pattern p-4 sm:p-5"
       >
         {messages.length === 0 ? (
           // Empty State / Welcome Screen
@@ -81,21 +81,21 @@ export default function ChatWindow({ messages, isLoading, onSendMessage }: ChatW
             </div>
             <h2 className="mb-2 text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl">Talk to your SQLite data</h2>
             <p className="mb-6 max-w-lg text-sm leading-6 text-text-muted">
-              Ask in English or Hinglish, get guarded SQL, readable explanations, charts, and exportable results in one workspace.
+              Ask in English or Hinglish, get guarded SQL, readable explanations, charts, and clean result views in one focused workspace.
             </p>
 
-            <div className="mb-6 grid w-full max-w-xl grid-cols-1 gap-2 sm:grid-cols-3">
-              <div className="rounded-xl border border-white/7 bg-white/4 p-3 text-left">
+            <div className="mb-6 grid w-full max-w-xl grid-cols-1 gap-3 sm:grid-cols-3">
+              <div className="rounded-2xl border border-white/7 bg-white/4 p-3 text-left">
                 <ShieldCheck size={16} className="mb-2 text-emerald-300" />
                 <p className="text-xs font-semibold text-foreground">Read-only safety</p>
                 <p className="mt-1 text-[10px] leading-4 text-text-muted">Blocks risky statements.</p>
               </div>
-              <div className="rounded-xl border border-white/7 bg-white/4 p-3 text-left">
+              <div className="rounded-2xl border border-white/7 bg-white/4 p-3 text-left">
                 <Sparkles size={16} className="mb-2 text-sky-300" />
                 <p className="text-xs font-semibold text-foreground">AI summaries</p>
                 <p className="mt-1 text-[10px] leading-4 text-text-muted">Turns rows into insights.</p>
               </div>
-              <div className="rounded-xl border border-white/7 bg-white/4 p-3 text-left">
+              <div className="rounded-2xl border border-white/7 bg-white/4 p-3 text-left">
                 <Table2 size={16} className="mb-2 text-amber-300" />
                 <p className="text-xs font-semibold text-foreground">Clean outputs</p>
                 <p className="mt-1 text-[10px] leading-4 text-text-muted">Inspect, chart, export.</p>
@@ -113,10 +113,10 @@ export default function ChatWindow({ messages, isLoading, onSendMessage }: ChatW
                   <button
                     key={i}
                     onClick={() => onSendMessage(eq.text)}
-                    className="group flex min-h-14 w-full items-center justify-between gap-3 rounded-xl border border-white/7 bg-white/4 px-3 py-2.5 text-left text-xs text-foreground transition-all duration-200 hover:-translate-y-0.5 hover:border-sky-400/35 hover:bg-sky-400/8 hover:text-white hover:shadow-lg hover:shadow-sky-950/20 active:scale-[0.99]"
+                    className="group flex min-h-14 w-full items-center justify-between gap-3 rounded-2xl border border-white/7 bg-white/4 px-3 py-3 text-left text-xs text-foreground transition-all duration-200 hover:-translate-y-0.5 hover:border-sky-400/35 hover:bg-sky-400/8 hover:text-white hover:shadow-lg hover:shadow-sky-950/20 active:scale-[0.99]"
                   >
                     <span className="flex min-w-0 items-center gap-2">
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/7 bg-background/50 text-sky-200 transition-colors group-hover:border-sky-400/25">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/7 bg-background/50 text-sky-200 transition-colors group-hover:border-sky-400/25">
                         <Icon size={14} />
                       </span>
                       <span className="line-clamp-2">&quot;{eq.text}&quot;</span>
@@ -148,9 +148,13 @@ export default function ChatWindow({ messages, isLoading, onSendMessage }: ChatW
       {/* Input Area */}
       <form 
         onSubmit={handleSubmit}
-        className="shrink-0 border-t border-border-muted bg-white/3 p-3"
+        className="shrink-0 border-t border-border-muted bg-white/4 p-4"
       >
-        <div className="relative flex items-center rounded-xl border border-card-border bg-background/85 pr-12 shadow-inner transition-all duration-200 focus-within:border-sky-400/55 focus-within:ring-2 focus-within:ring-sky-400/15">
+        <div className="mb-2 flex items-center justify-between gap-2 px-1 text-[10px] text-text-muted">
+          <span>Ask for trends, segments, counts, comparisons, or summaries.</span>
+          <span className="hidden sm:inline">English or Hinglish</span>
+        </div>
+        <div className="relative flex items-center rounded-2xl border border-card-border bg-background/85 pr-12 shadow-inner transition-all duration-200 focus-within:border-sky-400/55 focus-within:ring-2 focus-within:ring-sky-400/15">
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -158,12 +162,12 @@ export default function ChatWindow({ messages, isLoading, onSendMessage }: ChatW
             placeholder="Ask in English or Hinglish (e.g. total verified users kitne hain)..."
             rows={1}
             disabled={isLoading}
-            className="max-h-24 min-h-[46px] w-full resize-none bg-transparent py-3 pl-4 text-sm text-foreground placeholder-text-muted focus:outline-none disabled:opacity-60"
+            className="max-h-24 min-h-[52px] w-full resize-none bg-transparent py-3 pl-4 text-sm text-foreground placeholder-text-muted focus:outline-none disabled:opacity-60"
           />
           <button
             type="submit"
             disabled={!input.trim() || isLoading}
-            className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg bg-gradient-to-tr from-indigo-600 to-sky-500 text-white shadow-md shadow-indigo-950/30 transition-all duration-200 hover:brightness-110 disabled:bg-none disabled:bg-white/5 disabled:text-text-muted disabled:shadow-none cursor-pointer disabled:cursor-not-allowed active:scale-95"
+            className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-xl bg-gradient-to-tr from-indigo-600 to-sky-500 text-white shadow-md shadow-indigo-950/30 transition-all duration-200 hover:brightness-110 disabled:bg-none disabled:bg-white/5 disabled:text-text-muted disabled:shadow-none cursor-pointer disabled:cursor-not-allowed active:scale-95"
             aria-label="Send message"
           >
             <Send size={14} />
