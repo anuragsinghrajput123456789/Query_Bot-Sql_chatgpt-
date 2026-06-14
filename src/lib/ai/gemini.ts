@@ -1,9 +1,15 @@
 import { GoogleGenAI } from '@google/genai';
+import { BusinessInsights } from '@/types';
 
 export interface GeminiResponse {
   type: 'sql' | 'clarification' | 'error';
   sql: string | null;
   explanation: string | null;
+  sqlExplanation?: {
+    tablesUsed: string[];
+    joinExplanation: string;
+    businessExplanation: string;
+  } | null;
   options: string[] | null;
   errorMessage: string | null;
 }
@@ -77,12 +83,8 @@ async function tryGenerateContent(
 }
 
 /**
- * Transcribe natural language (English/Hinglish) questions into safe SQL and explanations
+ * Transcribe natural language (English/Hinglish/Hindi) questions into safe SQL and explanations
  * using the database schema dynamically fetched from SQLite.
- *
- * Implements:
- * - Exponential backoff retry (up to 3 attempts per model)
- * - Automatic fallback to alternative Gemini models when the primary is overloaded
  */
 export async function generateSqlAndExplanation(
   question: string,
@@ -92,40 +94,45 @@ export async function generateSqlAndExplanation(
 
   const systemInstruction = `
 You are an expert AI Assistant and SQL Translator for SQLite.
-Your job is to translate user questions in English or Hinglish into a read-only SQLite SELECT statement based on the provided DATABASE SCHEMA.
+Your job is to translate user questions in English, Hindi, or Hinglish into a read-only SQLite SELECT statement based on the provided DATABASE SCHEMA.
 
 DATABASE SCHEMA:
 ${schema}
 
 CURRENT DATE/TIME CONTEXT:
-The current reference date is 2026-06-11 (YYYY-MM-DD). Use this specific reference date (2026-06-11) as the current time to resolve questions referencing relative times (e.g. "last month", "this year", "last 30 days").
+The current reference date is 2026-06-11 (YYYY-MM-DD). Use this specific reference date (2026-06-11) as the current time to resolve questions referencing relative times (e.g. "last week", "yesterday", "last month", "this year", "last 30 days").
+- "last week" means 2026-06-04 to 2026-06-10.
+- "yesterday" means 2026-06-10.
 - "last month" means May 2026 (i.e. '2026-05-01' to '2026-05-31').
 - "last 30 days" means from '2026-05-12' to '2026-06-11'.
-- "last month ka revenue" means: SELECT SUM(amount_inr) FROM payments WHERE status = 'success' AND created_at BETWEEN '2026-05-01 00:00:00' AND '2026-05-31 23:59:59'
-
-EXAMPLES & TRANSLATIONS:
-- "Srinagar se female users dikhao" -> SELECT * FROM users WHERE city = 'Srinagar' AND gender = 'Female'
-- "Average annual income by profession" -> SELECT profession, AVG(annual_income_inr) as avg_income FROM users WHERE annual_income_inr IS NOT NULL GROUP BY profession ORDER BY avg_income DESC
-- "most popular plan" -> SELECT p.plan_name, COUNT(s.subscription_id) as subscriber_count FROM plans p JOIN subscriptions s ON p.plan_id = s.plan_id GROUP BY p.plan_name ORDER BY subscriber_count DESC LIMIT 1
-- "total verified users" -> SELECT COUNT(*) FROM users WHERE is_verified = 1
 
 INSTRUCTIONS:
-1. CLARIFICATION DETECTION:
-   If the user query is highly ambiguous, generic, or incomplete (e.g., "show users", "show report", "last report dikhao", "revenue list", "payments"), set "type" to "clarification" and return exactly 3 options in "options" that clarify what data they want.
-   Example options: ["Show all active users", "Total revenue from subscriptions", "Most common support ticket categories"].
+1. NATURAL LANGUAGE FILTERS:
+   Understand filters like "yesterday", "Delhi users", "premium female users", "highest revenue", "top customers" without requiring SQL syntax and translate them to SQLite queries.
+   - "premium female users" means users who have a subscription that is active (from subscriptions where status='active') and users who are Female.
+   - "highest revenue" or "top customers" means sorting by payments amount_inr descending.
 
-2. SQL GENERATION:
+2. MULTILANGUAGE & HINGLISH SUPPORT:
+   Understand mixed Hindi-English (Hinglish), pure Hindi, or pure English naturally. E.g.:
+   - "Delhi ke users dikhao" -> SELECT * FROM users WHERE city = 'Delhi'
+   - "kal kitne payment verify huye" -> SELECT COUNT(*) FROM payments WHERE status = 'success' AND date(created_at) = '2026-06-10'
+
+3. CLARIFICATION DETECTION:
+   If the user query is highly ambiguous, generic, or incomplete (e.g., "show users", "show report", "last report dikhao", "revenue list"), set "type" to "clarification" and return exactly 3 options in "options" that clarify what data they want.
+
+4. SQL GENERATION & EXPLANATION:
    If the query is clear and can be translated to a SELECT statement:
    - Formulate a clean, correct, and optimized SQLite SELECT statement.
-   - Use correct table names and join conditions as per the schema.
    - Set "type" to "sql".
    - Set "sql" to the SQL string.
    - Set "explanation" to a clear, concise paragraph explaining what the query does in plain English.
-   - Support English and Hinglish (e.g. "total verified users kitne hain" -> "SELECT COUNT(*) FROM users WHERE is_verified = 1").
+   - Set "sqlExplanation" to an object containing:
+     - "tablesUsed": Array of table names used.
+     - "joinExplanation": A simple description of how tables are joined (or "None" if no joins).
+     - "businessExplanation": A non-technical explanation of the query's business value.
 
-3. SAFETY BLOCK:
-   - You must NEVER generate queries that modify the database: INSERT, UPDATE, DELETE, DROP, CREATE, ALTER, TRUNCATE, PRAGMA, ATTACH, DETACH, VACUUM, REPLACE, RENAME.
-   - If the user asks you to modify data or perform administrative tasks, set "type" to "error" and set "errorMessage" to a helpful, friendly message stating that only SELECT queries are permitted for safety.
+5. SAFETY BLOCK:
+   - You must NEVER generate queries that modify the database (INSERT, UPDATE, DELETE, DROP, CREATE, ALTER, etc.). If requested, set "type" to "error" and set "errorMessage".
 
 OUTPUT FORMAT:
 You must respond with a JSON object containing:
@@ -133,6 +140,11 @@ You must respond with a JSON object containing:
   "type": "sql" | "clarification" | "error",
   "sql": "SELECT ... " (or null),
   "explanation": "This query retrieves ... " (or null),
+  "sqlExplanation": {
+    "tablesUsed": ["users"],
+    "joinExplanation": "Joined users and payments on user_id",
+    "businessExplanation": "Displays the total registered users from Delhi"
+  } (or null),
   "options": ["Option 1", "Option 2", "Option 3"] (or null),
   "errorMessage": "Safety block: Only select queries are allowed." (or null)
 }
@@ -190,16 +202,7 @@ You must respond with a JSON object containing:
   };
 }
 
-export interface BusinessInsights {
-  summary: string;
-  insights: string[];
-  anomalies: string[];
-  recommendedChart: 'bar' | 'line' | 'pie' | 'none';
-  chartConfig?: {
-    xAxisKey: string;
-    yAxisKey: string;
-  };
-}
+
 
 export async function generateBusinessInsights(
   question: string,
@@ -212,26 +215,44 @@ export async function generateBusinessInsights(
   const sampleRows = rows.slice(0, 30);
   
   const systemInstruction = `
-You are a business intelligence expert. Your job is to analyze the query results of an SQL query and provide:
+You are a business intelligence expert, startup founder, and product designer. Your job is to analyze the query results of an SQLite query and provide:
 1. A concise business summary (1-2 sentences) of what the data shows.
 2. A list of 2-3 key insights or trends.
-3. A list of anomalies, warnings, or patterns (e.g., missing fields, outlier values), or an empty list if none are found.
-4. The recommended chart type to visualize this dataset. Choose EXACTLY one of: "bar", "line", "pie", or "none".
-   Guidelines for chart recommendation:
-   - "line": Best for sequential data over time/dates (e.g., count/sum by day/month/year).
-   - "pie": Best for parts-of-a-whole/categorical distributions where categories are small (<= 8 slices). e.g., gender distribution, plan subscription splits.
-   - "bar": Best for comparing quantities across discrete categories (e.g. sales by city, count of users by age group).
-   - "none": If the data is text-only, single row with no numeric comparisons, or too complex to plot.
-5. A "chartConfig" mapping if a chart is recommended (i.e. not "none"):
-   - "xAxisKey": The exact property/column name from the data to use as the label/X-axis.
-   - "yAxisKey": The exact property/column name from the data representing the numerical value/Y-axis.
+3. A list of anomalies, warnings, or patterns (e.g., failed payments, spikes in support tickets, outlier values). If none, return an empty array.
+4. **AI Storytelling**: A narrative, human-like story of the results instead of raw data. E.g., "Registrations increased steadily throughout the week with a significant spike from Delhi on Friday."
+5. **Decision Assistant Mode**:
+   - "businessImpact": A concise statement of the business impact of this data (positive growth, risk warnings, etc.).
+   - "risks": A list of 1-2 key risks identified from the data (e.g. "Refund rate spiked by 7%").
+   - "opportunities": A list of 1-2 opportunities (e.g. "Scale Srinagar marketing due to high conversion").
+   - "recommendedActions": A list of 2-3 recommended actions based on the insights.
+   - "confidenceScore": A confidence percentage (0-100) based on data size, consistency, and completeness.
+   - "followUpQuestions": A list of 3-4 smart follow-up suggestions (e.g. "Compare Srinagar with Delhi", "Find root cause of payment failure", "Forecast next month's subscriptions").
+6. **Auto Chart Selection**: Choose EXACTLY one of: "kpi", "table", "bar", "line", "pie", "area", "heatmap", or "none".
+   - "kpi": Best when query returns a single numerical metric/stat (e.g. count of users, total revenue, average age).
+   - "table": Best for high-cardinality strings, profiles, lists, or multi-column detailed data.
+   - "line": Best for sequential trends over dates/time.
+   - "area": Best for cumulative totals or volume trends over dates/time.
+   - "pie": Best for parts-of-a-whole categorical splits where categories are <= 8.
+   - "bar": Best for comparing quantities across discrete categories (e.g. user counts by city/profession).
+   - "heatmap": Best for cross-tabulations or dense comparison matrices (e.g. cities vs sect counts).
+   - "none": If not chartable.
+7. A "chartConfig" mapping if a chart is recommended (i.e. not "none" or "kpi" or "table"):
+   - "xAxisKey": The exact property/column name from the data to use as the X-axis label.
+   - "yAxisKey": The exact property/column name from the data representing the numerical Y-axis value.
 
 Output MUST be a JSON object matching this structure:
 {
   "summary": "string describing the overall result",
   "insights": ["insight line 1", "insight line 2"],
-  "anomalies": ["anomaly 1" or none],
-  "recommendedChart": "bar" | "line" | "pie" | "none",
+  "anomalies": ["anomaly 1"],
+  "storytelling": "A narrative story...",
+  "businessImpact": "The impact...",
+  "risks": ["risk 1"],
+  "opportunities": ["opportunity 1"],
+  "recommendedActions": ["action 1"],
+  "confidenceScore": 85,
+  "followUpQuestions": ["question 1"],
+  "recommendedChart": "bar" | "line" | "pie" | "area" | "heatmap" | "kpi" | "table" | "none",
   "chartConfig": {
     "xAxisKey": "name_of_col",
     "yAxisKey": "name_of_numeric_col"
@@ -271,7 +292,7 @@ ${JSON.stringify(sampleRows, null, 2)}
           summary: parsed.summary || 'No summary available.',
           insights: Array.isArray(parsed.insights) ? parsed.insights : [],
           anomalies: Array.isArray(parsed.anomalies) ? parsed.anomalies : [],
-          recommendedChart: ['bar', 'line', 'pie', 'none'].includes(parsed.recommendedChart)
+          recommendedChart: ['bar', 'line', 'pie', 'area', 'heatmap', 'kpi', 'table', 'none'].includes(parsed.recommendedChart)
             ? parsed.recommendedChart
             : 'none',
           chartConfig: parsed.chartConfig && typeof parsed.chartConfig === 'object'
@@ -279,7 +300,14 @@ ${JSON.stringify(sampleRows, null, 2)}
                 xAxisKey: String(parsed.chartConfig.xAxisKey || ''),
                 yAxisKey: String(parsed.chartConfig.yAxisKey || ''),
               }
-            : undefined
+            : undefined,
+          businessImpact: parsed.businessImpact || '',
+          risks: Array.isArray(parsed.risks) ? parsed.risks : [],
+          opportunities: Array.isArray(parsed.opportunities) ? parsed.opportunities : [],
+          recommendedActions: Array.isArray(parsed.recommendedActions) ? parsed.recommendedActions : [],
+          confidenceScore: typeof parsed.confidenceScore === 'number' ? parsed.confidenceScore : 90,
+          followUpQuestions: Array.isArray(parsed.followUpQuestions) ? parsed.followUpQuestions : [],
+          storytelling: parsed.storytelling || '',
         };
       } catch (error) {
         console.warn(`[Gemini-Insights] Model "${modelName}" attempt ${attempt} failed:`, error);

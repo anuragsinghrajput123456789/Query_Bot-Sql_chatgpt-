@@ -2,14 +2,7 @@ import type { NextConfig } from "next";
 import path from "path";
 
 const nextConfig: NextConfig = {
-  webpack: (config) => {
-    config.resolve.alias = {
-      ...(config.resolve.alias || {}),
-      react: path.resolve(process.cwd(), 'node_modules', 'react'),
-      'react-dom': path.resolve(process.cwd(), 'node_modules', 'react-dom'),
-    };
-    return config;
-  },
+  // Removed Webpack React path alias as it breaks Next.js App Router server/client runtime boundary
   turbopack: {
     root: path.resolve(process.cwd()),
   },

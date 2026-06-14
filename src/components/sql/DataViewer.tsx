@@ -81,16 +81,16 @@ export default function DataViewer({ rows }: DataViewerProps) {
   return (
     <div className="flex flex-col overflow-hidden rounded-xl border border-card-border bg-card-bg/85 shadow-2xl shadow-black/20 backdrop-blur-xl">
       {/* Header toolbar */}
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border-muted bg-white/3 px-4 py-3">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border-muted bg-white/3 px-4 py-3 select-none">
         <div className="flex items-center gap-2">
-          <FileSpreadsheet size={16} className="text-indigo-400" />
+          <FileSpreadsheet size={16} className="text-accent" />
           <span className="text-xs font-semibold uppercase tracking-wider text-foreground">Query Results</span>
         </div>
         <button
           onClick={exportToCSV}
-          className="flex items-center gap-1.5 rounded-lg bg-gradient-to-tr from-indigo-600 to-sky-500 px-3 py-1.5 text-[11px] font-medium text-white shadow-sm shadow-indigo-950/20 transition-all duration-200 hover:brightness-110 active:scale-95 cursor-pointer"
+          className="group flex items-center gap-1.5 rounded-lg bg-gradient-to-tr from-accent-secondary to-accent px-3 py-1.5 text-[11px] font-semibold text-white shadow-sm shadow-accent-secondary/15 transition-all duration-200 hover:brightness-110 active:scale-95 cursor-pointer"
         >
-          <Download size={12} />
+          <Download size={12} className="icon-hover-scale" />
           <span>Export CSV</span>
         </button>
       </div>
@@ -99,7 +99,7 @@ export default function DataViewer({ rows }: DataViewerProps) {
       <div className="w-full overflow-x-auto">
         <table className="custom-table min-w-full text-left text-xs">
           <thead>
-            <tr>
+            <tr className="select-none">
               {columns.map((col) => (
                 <th key={col} className="px-4 py-3 text-text-muted font-medium">
                   {formatHeader(col)}
@@ -109,7 +109,7 @@ export default function DataViewer({ rows }: DataViewerProps) {
           </thead>
           <tbody>
             {paginatedRows.map((row, idx) => (
-              <tr key={idx} className="hover:bg-white/1 transition-all duration-150">
+              <tr key={idx} className="hover:bg-white/2 transition-all duration-150">
                 {columns.map((col) => (
                   <td key={col} className="px-4 py-3 text-foreground border-b border-border-muted whitespace-nowrap">
                     {row[col] === null || row[col] === undefined ? (
@@ -128,7 +128,7 @@ export default function DataViewer({ rows }: DataViewerProps) {
       </div>
 
       {/* Pagination Controls */}
-      <div className="flex flex-col gap-3 border-t border-border-muted bg-white/2 px-4 py-3 text-[11px] text-text-muted sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 border-t border-border-muted bg-white/2 px-4 py-3 text-[11px] text-text-muted sm:flex-row sm:flex-wrap sm:items-center sm:justify-between select-none">
         {/* Row Range / Page Count info */}
         <div>
           Showing{' '}
@@ -149,7 +149,7 @@ export default function DataViewer({ rows }: DataViewerProps) {
             <select
               value={pageSize}
               onChange={handlePageSizeChange}
-              className="bg-background border border-card-border rounded px-1.5 py-0.5 text-foreground focus:outline-none focus:border-indigo-500"
+              className="bg-background border border-card-border rounded px-1.5 py-0.5 text-foreground focus:outline-none focus:border-accent"
             >
               <option value={5}>5</option>
               <option value={10}>10</option>

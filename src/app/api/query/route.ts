@@ -1,12 +1,46 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDbSchema, runReadOnlyQuery, saveHistory } from '@/lib/db/sqlite';
+import { getDbSchema, runReadOnlyQuery, runReadWriteQuery, saveHistory } from '@/lib/db/sqlite';
 import { generateSqlAndExplanation, generateBusinessInsights } from '@/lib/ai/gemini';
 import { validateSqlQuery } from '@/lib/security/safety';
+import { getSession } from '@/lib/auth/session';
 
 export async function POST(req: NextRequest) {
   try {
+    const session = getSession(req);
+    const userId = session ? session.userId : null;
+    const isAdmin = session ? session.role === 'admin' : false;
+
     const body = await req.json();
-    const { question } = body;
+    const { question, sqlQuery } = body;
+
+    if (sqlQuery) {
+      if (!isAdmin) {
+        const validation = validateSqlQuery(sqlQuery);
+        if (!validation.safe) {
+          return NextResponse.json({
+            success: false,
+            error: `Security Shield blocked this query: ${validation.error}`,
+          });
+        }
+      }
+      let rows: Record<string, unknown>[] = [];
+      try {
+        if (isAdmin) {
+          rows = await runReadWriteQuery(sqlQuery);
+        } else {
+          rows = await runReadOnlyQuery(sqlQuery);
+        }
+      } catch (err) {
+        return NextResponse.json({
+          success: false,
+          error: (err as Error).message,
+        });
+      }
+      return NextResponse.json({
+        success: true,
+        rows,
+      });
+    }
 
     if (!question || typeof question !== 'string' || question.trim() === '') {
       return NextResponse.json(
@@ -56,7 +90,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // 3. We have a generated SQL query - validate its security
+    // 3. We have a generated SQL query - validate its security if user is not admin
     const sql = aiResult.sql;
     if (!sql) {
       return NextResponse.json({
@@ -66,24 +100,32 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const validation = validateSqlQuery(sql);
-    if (!validation.safe) {
-      return NextResponse.json({
-        success: true,
-        type: 'error',
-        sql,
-        explanation: aiResult.explanation,
-        errorMessage: `Security Shield blocked this query: ${validation.error}`,
-      });
+
+    if (!isAdmin) {
+      const validation = validateSqlQuery(sql);
+      if (!validation.safe) {
+        return NextResponse.json({
+          success: true,
+          type: 'error',
+          sql,
+          explanation: aiResult.explanation,
+          sqlExplanation: aiResult.sqlExplanation,
+          errorMessage: `Security Shield blocked this query: ${validation.error}`,
+        });
+      }
     }
 
-    // 4. Run the query safely in read-only mode and measure execution time
+    // 4. Run the query safely based on role and measure execution time
     const start = process.hrtime();
     let rows: Record<string, unknown>[] = [];
     let queryError: string | null = null;
 
     try {
-      rows = await runReadOnlyQuery(sql);
+      if (isAdmin) {
+        rows = await runReadWriteQuery(sql);
+      } else {
+        rows = await runReadOnlyQuery(sql);
+      }
     } catch (sqlErr) {
       queryError = (sqlErr as Error).message;
     }
@@ -94,13 +136,13 @@ export async function POST(req: NextRequest) {
     const rowsCount = rows ? rows.length : 0;
 
     // 5. Save successfully executed queries (or attempted ones) to history
-    // We log it even if SQLite threw a query error (e.g. column not found), so that users can review the history.
     try {
       await saveHistory(
         question.trim(),
         sql,
         executionTimeMs,
-        queryError ? 0 : rowsCount
+        queryError ? 0 : rowsCount,
+        userId
       );
     } catch (historyErr) {
       console.warn('Failed to save to history logs:', historyErr);
@@ -131,6 +173,7 @@ export async function POST(req: NextRequest) {
       type: 'sql',
       sql,
       explanation: aiResult.explanation,
+      sqlExplanation: aiResult.sqlExplanation,
       rows,
       executionTimeMs,
       rowsCount,

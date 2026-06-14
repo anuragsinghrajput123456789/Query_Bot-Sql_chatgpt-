@@ -258,11 +258,11 @@ export default function UploadModal({ isOpen, onClose, onUploadSuccess }: Upload
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
-      <div className="w-full max-w-xl bg-card-bg border border-card-border rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
+      <div className="w-full max-w-xl bg-card-bg border border-card-border rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden backdrop-blur-xl">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-border-muted bg-white/2 select-none">
           <div className="flex items-center gap-2">
-            <Upload size={18} className="text-indigo-400" />
+            <Upload size={18} className="text-accent" />
             <h3 className="text-sm font-bold uppercase tracking-wider text-foreground">Upload Custom Dataset</h3>
           </div>
           <button 
@@ -286,8 +286,8 @@ export default function UploadModal({ isOpen, onClose, onUploadSuccess }: Upload
               onClick={() => fileInputRef.current?.click()}
               className={`border-2 border-dashed rounded-xl p-8 text-center flex flex-col items-center justify-center cursor-pointer transition-all duration-200 ${
                 dragActive 
-                  ? 'border-indigo-500 bg-indigo-500/5' 
-                  : 'border-white/10 hover:border-indigo-500/40 hover:bg-white/2'
+                  ? 'border-accent bg-accent/5' 
+                  : 'border-white/10 hover:border-accent/40 hover:bg-white/2'
               }`}
             >
               <input 
@@ -297,8 +297,8 @@ export default function UploadModal({ isOpen, onClose, onUploadSuccess }: Upload
                 onChange={handleFileChange}
                 className="hidden" 
               />
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 mb-4 shadow-inner">
-                <FileSpreadsheet size={24} />
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-accent/10 border border-accent/20 text-accent mb-4 shadow-inner">
+                <FileSpreadsheet size={24} className="animate-icon-float" />
               </div>
               <h4 className="text-xs font-semibold text-foreground mb-1">Drag and drop file here, or click to browse</h4>
               <p className="text-[10px] text-text-muted">Supports CSV or Excel (.xlsx, .xls) files up to 10MB</p>
@@ -307,8 +307,8 @@ export default function UploadModal({ isOpen, onClose, onUploadSuccess }: Upload
 
           {/* Status 2: Parsing (Loader) */}
           {status === 'parsing' && (
-            <div className="py-12 text-center flex flex-col items-center justify-center gap-4">
-              <RefreshCw size={28} className="text-indigo-500 animate-spin" />
+            <div className="py-12 text-center flex flex-col items-center justify-center gap-4 select-none">
+              <RefreshCw size={28} className="text-accent animate-spin" />
               <div>
                 <p className="text-xs font-semibold text-foreground">Parsing dataset file...</p>
                 <p className="text-[10px] text-text-muted mt-1">Extracting spreadsheet headers and rows in browser context</p>
@@ -320,8 +320,8 @@ export default function UploadModal({ isOpen, onClose, onUploadSuccess }: Upload
           {status === 'previewing' && (
             <div className="space-y-4">
               {/* Info summary */}
-              <div className="flex items-center gap-2 p-3 rounded-lg bg-white/2 border border-white/5 text-xs">
-                <FileSpreadsheet size={16} className="text-indigo-400 shrink-0" />
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-white/2 border border-white/5 text-xs select-none">
+                <FileSpreadsheet size={16} className="text-accent shrink-0" />
                 <div className="truncate">
                   <p className="font-semibold text-foreground truncate">{fileName}</p>
                   <p className="text-[10px] text-text-muted mt-0.5">{fileSize} • {columns.length} columns • {rows.length} rows detected</p>
@@ -330,8 +330,8 @@ export default function UploadModal({ isOpen, onClose, onUploadSuccess }: Upload
 
               {/* Table Name Config */}
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-text-muted">Target SQLite Table Name</label>
-                <div className="relative flex items-center bg-background border border-card-border rounded-xl px-4 py-2 text-xs text-foreground focus-within:border-indigo-500/50">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-text-muted select-none">Target SQLite Table Name</label>
+                <div className="relative flex items-center bg-background border border-card-border rounded-xl px-4 py-2 text-xs text-foreground focus-within:border-accent/50 focus-within:ring-2 focus-within:ring-accent/10">
                   <span className="text-text-muted select-none mr-0.5">uploaded_</span>
                   <input 
                     type="text"
@@ -341,16 +341,16 @@ export default function UploadModal({ isOpen, onClose, onUploadSuccess }: Upload
                     className="w-full bg-transparent focus:outline-none font-semibold text-foreground"
                   />
                 </div>
-                <p className="text-[9px] text-text-muted">Table will be isolated as <strong>uploaded_{customTableName || 'sales_data'}</strong>. Only select query reads will be permitted.</p>
+                <p className="text-[9px] text-text-muted select-none">Table will be isolated as <strong>uploaded_{customTableName || 'sales_data'}</strong>. Only select query reads will be permitted.</p>
               </div>
 
               {/* Data Preview */}
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-text-muted">Dataset Preview (First 5 Rows)</label>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-text-muted select-none">Dataset Preview (First 5 Rows)</label>
                 <div className="border border-card-border rounded-xl overflow-hidden bg-background max-h-[160px] overflow-y-auto">
                   <table className="w-full text-[10px] text-left border-collapse">
                     <thead>
-                      <tr className="bg-white/3 border-b border-card-border">
+                      <tr className="bg-white/3 border-b border-card-border select-none">
                         {columns.map((col, i) => (
                           <th key={i} className="px-3 py-2 text-text-muted font-semibold border-r border-card-border/40 whitespace-nowrap">{col}</th>
                         ))}
@@ -373,8 +373,8 @@ export default function UploadModal({ isOpen, onClose, onUploadSuccess }: Upload
 
           {/* Status 4: Uploading (Loader) */}
           {status === 'uploading' && (
-            <div className="py-12 text-center flex flex-col items-center justify-center gap-4">
-              <RefreshCw size={28} className="text-indigo-500 animate-spin" />
+            <div className="py-12 text-center flex flex-col items-center justify-center gap-4 select-none">
+              <RefreshCw size={28} className="text-accent animate-spin" />
               <div>
                 <p className="text-xs font-semibold text-foreground">Importing data into local SQLite database...</p>
                 <p className="text-[10px] text-text-muted mt-1">Executing CREATE TABLE and transaction bulk insertions</p>
@@ -384,13 +384,13 @@ export default function UploadModal({ isOpen, onClose, onUploadSuccess }: Upload
 
           {/* Status 5: Success Screen */}
           {status === 'success' && (
-            <div className="py-8 text-center flex flex-col items-center justify-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 mb-2 shadow-inner">
-                <CheckCircle size={24} />
+            <div className="py-8 text-center flex flex-col items-center justify-center gap-3 select-none">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent-green/10 border border-accent-green/20 text-accent-green mb-2 shadow-inner">
+                <CheckCircle size={24} className="animate-pulse" />
               </div>
               <h4 className="text-sm font-bold text-white">Import Completed Successfully!</h4>
               <p className="text-xs text-text-muted max-w-xs leading-normal">
-                Your file has been imported as <strong className="text-indigo-300 font-mono">uploaded_{customTableName}</strong>.
+                Your file has been imported as <strong className="text-accent font-mono">uploaded_{customTableName}</strong>.
               </p>
               <div className="p-3 bg-white/2 border border-white/5 rounded-xl text-[10px] text-text-muted grid grid-cols-2 gap-x-8 gap-y-1 text-left w-64 mt-2">
                 <span>Table:</span> <span className="font-semibold text-foreground text-right">uploaded_{customTableName}</span>
@@ -403,9 +403,9 @@ export default function UploadModal({ isOpen, onClose, onUploadSuccess }: Upload
           {/* Error Message Box */}
           {errorMessage && (
             <div className="p-3 rounded-xl border border-red-500/20 bg-red-500/5 text-red-200 text-xs flex items-start gap-2 leading-relaxed">
-              <AlertTriangle size={14} className="text-red-400 shrink-0 mt-0.5" />
+              <AlertTriangle size={14} className="text-red-400 shrink-0 mt-0.5 animate-bounce" />
               <div>
-                <strong className="block font-bold">Import Failed</strong>
+                <strong className="block font-bold select-none">Import Failed</strong>
                 <span className="opacity-90">{errorMessage}</span>
               </div>
             </div>
@@ -414,7 +414,7 @@ export default function UploadModal({ isOpen, onClose, onUploadSuccess }: Upload
         </div>
 
         {/* Footer actions */}
-        <div className="px-6 py-4 border-t border-border-muted bg-white/2 flex items-center justify-end gap-2 shrink-0">
+        <div className="px-6 py-4 border-t border-border-muted bg-white/2 flex items-center justify-end gap-2 shrink-0 select-none">
           {status === 'previewing' && (
             <>
               <button
@@ -425,9 +425,9 @@ export default function UploadModal({ isOpen, onClose, onUploadSuccess }: Upload
               </button>
               <button
                 onClick={handleUploadSubmit}
-                className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-600/10 transition-all duration-200 cursor-pointer active:scale-95"
+                className="group flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-xl bg-gradient-to-tr from-accent-secondary to-accent text-white shadow-md shadow-accent-secondary/15 transition-all duration-200 cursor-pointer active:scale-95"
               >
-                <Sparkles size={12} />
+                <Sparkles size={12} className="icon-hover-scale" />
                 <span>Import Table</span>
               </button>
             </>
@@ -436,7 +436,7 @@ export default function UploadModal({ isOpen, onClose, onUploadSuccess }: Upload
           {status === 'success' && (
             <button
               onClick={() => { resetModal(); onClose(); }}
-              className="px-4 py-2 text-xs font-semibold rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white transition-all duration-200 cursor-pointer active:scale-95"
+              className="px-4 py-2 text-xs font-semibold rounded-xl bg-gradient-to-tr from-accent-secondary to-accent text-white transition-all duration-200 cursor-pointer active:scale-95"
             >
               Close Window
             </button>
@@ -445,7 +445,7 @@ export default function UploadModal({ isOpen, onClose, onUploadSuccess }: Upload
           {status === 'error' && (
             <button
               onClick={resetModal}
-              className="px-4 py-2 text-xs font-semibold rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white transition-all duration-200 cursor-pointer active:scale-95"
+              className="px-4 py-2 text-xs font-semibold rounded-xl bg-gradient-to-tr from-accent-secondary to-accent text-white transition-all duration-200 cursor-pointer active:scale-95"
             >
               Try Again
             </button>

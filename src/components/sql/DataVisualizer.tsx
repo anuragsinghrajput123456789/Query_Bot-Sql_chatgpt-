@@ -2,18 +2,9 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 
 import React, { useState, useMemo } from 'react';
-import { BarChart2, LineChart, PieChart, Sparkles, AlertTriangle, TrendingUp, HelpCircle } from 'lucide-react';
+import { BarChart2, LineChart, PieChart, Sparkles, AlertTriangle, TrendingUp, HelpCircle, AreaChart, Grid, Table, Hash, Volume2, VolumeX } from 'lucide-react';
 
-interface BusinessInsights {
-  summary: string;
-  insights: string[];
-  anomalies: string[];
-  recommendedChart: 'bar' | 'line' | 'pie' | 'none';
-  chartConfig?: {
-    xAxisKey: string;
-    yAxisKey: string;
-  };
-}
+import { BusinessInsights } from '@/types';
 
 interface DataVisualizerProps {
   rows: Record<string, unknown>[];
@@ -21,8 +12,39 @@ interface DataVisualizerProps {
 }
 
 export default function DataVisualizer({ rows, insights }: DataVisualizerProps) {
-  const [activeTab, setActiveTab] = useState<'bar' | 'line' | 'pie'>('bar');
+  const [activeTab, setActiveTab] = useState<'bar' | 'line' | 'pie' | 'area' | 'heatmap' | 'kpi' | 'table'>('bar');
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+
+  // Stop speaking on unmount
+  React.useEffect(() => {
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
+
+  const handlePlayTts = (text: string) => {
+    if (typeof window === 'undefined') return;
+    
+    if (isSpeaking) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+      return;
+    }
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'en-IN'; // Elegant Indian accent
+    utterance.onend = () => {
+      setIsSpeaking(false);
+    };
+    utterance.onerror = () => {
+      setIsSpeaking(false);
+    };
+    setIsSpeaking(true);
+    window.speechSynthesis.speak(utterance);
+  };
 
   // Auto-detect keys if insights config is missing or invalid
   const keys = useMemo(() => {
@@ -64,8 +86,8 @@ export default function DataVisualizer({ rows, insights }: DataVisualizerProps) 
 
   // Set default active tab based on AI recommendation
   React.useEffect(() => {
-    if (insights?.recommendedChart && ['bar', 'line', 'pie'].includes(insights.recommendedChart)) {
-      setActiveTab(insights.recommendedChart as 'bar' | 'line' | 'pie');
+    if (insights?.recommendedChart && ['bar', 'line', 'pie', 'area', 'heatmap', 'kpi', 'table'].includes(insights.recommendedChart)) {
+      setActiveTab(insights.recommendedChart as any);
     } else {
       // Auto-detect logic: if X axis seems to be date-like, default to line
       const firstXVal = String(rows[0]?.[keys.xKey] || '');
@@ -138,32 +160,32 @@ export default function DataVisualizer({ rows, insights }: DataVisualizerProps) 
     return val.toLocaleString([], { maximumFractionDigits: 1 });
   };
 
-  // Harmonious modern palette
+  // Harmonious cyber ops palette
   const colors = [
-    '#6366f1', // Indigo
+    '#00f2ff', // Cyan (Accent)
+    '#6366f1', // Indigo (Accent Secondary)
+    '#10b981', // Emerald (Accent Green)
     '#ec4899', // Pink
-    '#10b981', // Emerald
     '#f59e0b', // Amber
-    '#3b82f6', // Blue
     '#8b5cf6', // Violet
-    '#ef4444', // Red
     '#14b8a6', // Teal
+    '#ef4444', // Red
   ];
 
   return (
     <div className="space-y-4">
       {/* 1. AI Business Summary & Insights Panel */}
       {insights && (
-        <div className="p-4 rounded-xl border border-card-border bg-gradient-to-br from-indigo-950/20 to-slate-950/40 backdrop-blur-md relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-3 opacity-10 text-indigo-400 select-none">
+        <div className="p-4 rounded-xl border border-card-border bg-gradient-to-br from-accent-secondary/5 to-accent/5 backdrop-blur-md relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-3 opacity-5 text-accent select-none pointer-events-none">
             <Sparkles size={48} className="animate-pulse" />
           </div>
 
-          <div className="flex items-center gap-2 mb-2">
-            <div className="p-1 rounded bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
-              <Sparkles size={14} />
+          <div className="flex items-center gap-2 mb-2 select-none">
+            <div className="p-1 rounded bg-accent/10 border border-accent/20 text-accent">
+              <Sparkles size={14} className="animate-pulse" />
             </div>
-            <h4 className="text-[11px] font-bold uppercase tracking-wider text-indigo-300">AI Business Insights</h4>
+            <h4 className="text-[11px] font-bold uppercase tracking-wider text-accent/80">AI Business Insights</h4>
           </div>
 
           <p className="text-xs text-foreground font-medium leading-relaxed mb-3">
@@ -174,11 +196,11 @@ export default function DataVisualizer({ rows, insights }: DataVisualizerProps) 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3 pt-3 border-t border-white/5">
             {insights.insights.length > 0 && (
               <div className="space-y-1.5">
-                <span className="text-[9px] font-bold text-text-muted uppercase tracking-wider block">Key Trends / Highlights</span>
+                <span className="text-[9px] font-bold text-text-muted uppercase tracking-wider block select-none">Key Trends / Highlights</span>
                 <ul className="space-y-1">
                   {insights.insights.map((ins, idx) => (
                     <li key={idx} className="text-[10px] text-foreground opacity-90 flex items-start gap-1.5 leading-relaxed">
-                      <TrendingUp size={11} className="text-emerald-400 shrink-0 mt-0.5" />
+                      <TrendingUp size={11} className="text-accent-green shrink-0 mt-0.5" />
                       <span>{ins}</span>
                     </li>
                   ))}
@@ -188,7 +210,7 @@ export default function DataVisualizer({ rows, insights }: DataVisualizerProps) 
 
             {insights.anomalies.length > 0 && (
               <div className="space-y-1.5">
-                <span className="text-[9px] font-bold text-text-muted uppercase tracking-wider block">Anomalies / Callouts</span>
+                <span className="text-[9px] font-bold text-text-muted uppercase tracking-wider block select-none">Anomalies / Callouts</span>
                 <ul className="space-y-1">
                   {insights.anomalies.map((anom, idx) => (
                     <li key={idx} className="text-[10px] text-foreground opacity-90 flex items-start gap-1.5 leading-relaxed">
@@ -200,14 +222,35 @@ export default function DataVisualizer({ rows, insights }: DataVisualizerProps) 
               </div>
             )}
           </div>
+
+          {/* AI Storytelling Section */}
+          {insights.storytelling && (
+            <div className="mt-4 p-3 rounded-lg border border-white/5 bg-background/30 flex flex-col gap-2 relative">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold text-accent-secondary uppercase tracking-wider block select-none">AI Business Story</span>
+                <button
+                  type="button"
+                  onClick={() => handlePlayTts(insights.storytelling || '')}
+                  className={`p-1 rounded bg-white/5 border border-white/10 hover:border-accent hover:bg-accent/10 text-text-muted hover:text-white transition-all cursor-pointer flex items-center gap-1 text-[9px]`}
+                  title="Read story aloud"
+                >
+                  {isSpeaking ? <VolumeX size={12} className="text-red-400 animate-pulse" /> : <Volume2 size={12} />}
+                  <span>{isSpeaking ? 'Stop' : 'Listen'}</span>
+                </button>
+              </div>
+              <p className="text-xs text-foreground opacity-90 leading-relaxed italic">
+                &ldquo;{insights.storytelling}&rdquo;
+              </p>
+            </div>
+          )}
         </div>
       )}
 
       {/* 2. Visualizations Container */}
       {displayData.length > 0 ? (
-        <div className="p-4 rounded-xl border border-card-border bg-card-bg/40 flex flex-col gap-4">
+        <div className="p-4 rounded-xl border border-card-border bg-card-bg/40 flex flex-col gap-4 backdrop-blur-md">
           <div className="flex items-center justify-between">
-            <div className="flex flex-col">
+            <div className="flex flex-col select-none">
               <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted">Interactive Chart</span>
               <span className="text-xs font-semibold text-foreground mt-0.5">
                 {keys.yKey.replace(/_/g, ' ')} by {keys.xKey.replace(/_/g, ' ')}
@@ -215,11 +258,11 @@ export default function DataVisualizer({ rows, insights }: DataVisualizerProps) 
             </div>
 
             {/* View Mode Tabs */}
-            <div className="flex items-center gap-1 p-0.5 rounded-lg bg-background border border-card-border">
+            <div className="flex flex-wrap items-center gap-1 p-0.5 rounded-lg bg-background border border-card-border select-none">
               <button
                 onClick={() => setActiveTab('bar')}
                 className={`p-1.5 rounded-md text-text-muted hover:text-white transition-all cursor-pointer ${
-                  activeTab === 'bar' ? 'bg-white/5 text-indigo-400 border border-white/5' : 'border border-transparent'
+                  activeTab === 'bar' ? 'bg-white/5 text-accent border border-white/5' : 'border border-transparent'
                 }`}
                 title="Bar Chart"
               >
@@ -228,7 +271,7 @@ export default function DataVisualizer({ rows, insights }: DataVisualizerProps) 
               <button
                 onClick={() => setActiveTab('line')}
                 className={`p-1.5 rounded-md text-text-muted hover:text-white transition-all cursor-pointer ${
-                  activeTab === 'line' ? 'bg-white/5 text-indigo-400 border border-white/5' : 'border border-transparent'
+                  activeTab === 'line' ? 'bg-white/5 text-accent border border-white/5' : 'border border-transparent'
                 }`}
                 title="Line Chart"
               >
@@ -237,11 +280,47 @@ export default function DataVisualizer({ rows, insights }: DataVisualizerProps) 
               <button
                 onClick={() => setActiveTab('pie')}
                 className={`p-1.5 rounded-md text-text-muted hover:text-white transition-all cursor-pointer ${
-                  activeTab === 'pie' ? 'bg-white/5 text-indigo-400 border border-white/5' : 'border border-transparent'
+                  activeTab === 'pie' ? 'bg-white/5 text-accent border border-white/5' : 'border border-transparent'
                 }`}
                 title="Donut Chart"
               >
                 <PieChart size={14} />
+              </button>
+              <button
+                onClick={() => setActiveTab('area')}
+                className={`p-1.5 rounded-md text-text-muted hover:text-white transition-all cursor-pointer ${
+                  activeTab === 'area' ? 'bg-white/5 text-accent border border-white/5' : 'border border-transparent'
+                }`}
+                title="Area Chart"
+              >
+                <AreaChart size={14} />
+              </button>
+              <button
+                onClick={() => setActiveTab('heatmap')}
+                className={`p-1.5 rounded-md text-text-muted hover:text-white transition-all cursor-pointer ${
+                  activeTab === 'heatmap' ? 'bg-white/5 text-accent border border-white/5' : 'border border-transparent'
+                }`}
+                title="Heatmap Matrix"
+              >
+                <Grid size={14} />
+              </button>
+              <button
+                onClick={() => setActiveTab('kpi')}
+                className={`p-1.5 rounded-md text-text-muted hover:text-white transition-all cursor-pointer ${
+                  activeTab === 'kpi' ? 'bg-white/5 text-accent border border-white/5' : 'border border-transparent'
+                }`}
+                title="KPI Metric Card"
+              >
+                <Hash size={14} />
+              </button>
+              <button
+                onClick={() => setActiveTab('table')}
+                className={`p-1.5 rounded-md text-text-muted hover:text-white transition-all cursor-pointer ${
+                  activeTab === 'table' ? 'bg-white/5 text-accent border border-white/5' : 'border border-transparent'
+                }`}
+                title="Data Table Summary"
+              >
+                <Table size={14} />
               </button>
             </div>
           </div>
@@ -254,12 +333,12 @@ export default function DataVisualizer({ rows, insights }: DataVisualizerProps) 
               <svg viewBox="0 0 500 240" className="w-full h-full">
                 <defs>
                   <linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#8b5cf6" />
-                    <stop offset="100%" stopColor="#4f46e5" />
+                    <stop offset="0%" stopColor="#00f2ff" />
+                    <stop offset="100%" stopColor="#6366f1" />
                   </linearGradient>
                   <linearGradient id="barGradHover" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#a78bfa" />
-                    <stop offset="100%" stopColor="#6366f1" />
+                    <stop offset="0%" stopColor="#74f5ff" />
+                    <stop offset="100%" stopColor="#8b5cf6" />
                   </linearGradient>
                 </defs>
 
@@ -269,7 +348,7 @@ export default function DataVisualizer({ rows, insights }: DataVisualizerProps) 
                   const val = maxValue - ratio * (maxValue - minValue);
                   return (
                     <g key={idx}>
-                      <line x1="50" y1={y} x2="480" y2={y} stroke="rgba(255,255,255,0.04)" strokeDasharray="3,3" />
+                      <line x1="50" y1={y} x2="480" y2={y} stroke="rgba(255,255,255,0.03)" strokeDasharray="3,3" />
                       <text x="40" y={y + 3} fill="#94a3b8" fontSize="8" textAnchor="end" fontFamily="monospace">
                         {formatValue(val)}
                       </text>
@@ -318,8 +397,8 @@ export default function DataVisualizer({ rows, insights }: DataVisualizerProps) 
                             width="120"
                             height="22"
                             rx="5"
-                            fill="#1e1b4b"
-                            stroke="#8b5cf6"
+                            fill="#050508"
+                            stroke="#00f2ff"
                             strokeWidth="1"
                           />
                           <text
@@ -351,7 +430,7 @@ export default function DataVisualizer({ rows, insights }: DataVisualizerProps) 
                   );
                 })}
                 {/* Baseline */}
-                <line x1="50" y1="190" x2="480" y2="190" stroke="rgba(255,255,255,0.15)" strokeWidth="1" />
+                <line x1="50" y1="190" x2="480" y2="190" stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
               </svg>
             )}
 
@@ -360,13 +439,13 @@ export default function DataVisualizer({ rows, insights }: DataVisualizerProps) 
               <svg viewBox="0 0 500 240" className="w-full h-full">
                 <defs>
                   <linearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0%" stopColor="#4f46e5" />
-                    <stop offset="50%" stopColor="#8b5cf6" />
-                    <stop offset="100%" stopColor="#ec4899" />
+                    <stop offset="0%" stopColor="#6366f1" />
+                    <stop offset="50%" stopColor="#00f2ff" />
+                    <stop offset="100%" stopColor="#10b981" />
                   </linearGradient>
                   <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0.25" />
-                    <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0.0" />
+                    <stop offset="0%" stopColor="#00f2ff" stopOpacity="0.15" />
+                    <stop offset="100%" stopColor="#00f2ff" stopOpacity="0.0" />
                   </linearGradient>
                 </defs>
 
@@ -376,7 +455,7 @@ export default function DataVisualizer({ rows, insights }: DataVisualizerProps) 
                   const val = maxValue - ratio * (maxValue - minValue);
                   return (
                     <g key={idx}>
-                      <line x1="50" y1={y} x2="480" y2={y} stroke="rgba(255,255,255,0.04)" strokeDasharray="3,3" />
+                      <line x1="50" y1={y} x2="480" y2={y} stroke="rgba(255,255,255,0.03)" strokeDasharray="3,3" />
                       <text x="40" y={y + 3} fill="#94a3b8" fontSize="8" textAnchor="end" fontFamily="monospace">
                         {formatValue(val)}
                       </text>
@@ -424,8 +503,8 @@ export default function DataVisualizer({ rows, insights }: DataVisualizerProps) 
                               cx={pt.x}
                               cy={pt.y}
                               r={isHovered ? 6 : 4}
-                              fill={isHovered ? "#ec4899" : "#8b5cf6"}
-                              stroke="#0f0f15"
+                              fill={isHovered ? "#00f2ff" : "#6366f1"}
+                              stroke="#050508"
                               strokeWidth="1.5"
                               className="transition-all duration-200"
                             />
@@ -439,8 +518,8 @@ export default function DataVisualizer({ rows, insights }: DataVisualizerProps) 
                                   width="100"
                                   height="20"
                                   rx="4"
-                                  fill="#1e1b4b"
-                                  stroke="#ec4899"
+                                  fill="#050508"
+                                  stroke="#00f2ff"
                                   strokeWidth="1"
                                 />
                                 <text
@@ -475,7 +554,7 @@ export default function DataVisualizer({ rows, insights }: DataVisualizerProps) 
                   );
                 })()}
                 {/* Baseline */}
-                <line x1="50" y1="190" x2="480" y2="190" stroke="rgba(255,255,255,0.15)" strokeWidth="1" />
+                <line x1="50" y1="190" x2="480" y2="190" stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
               </svg>
             )}
 
@@ -532,7 +611,7 @@ export default function DataVisualizer({ rows, insights }: DataVisualizerProps) 
                       )}
                     </span>
                     {hoveredIndex !== null && (
-                      <span className="text-[8px] font-bold text-indigo-400 mt-0.5">
+                      <span className="text-[8px] font-bold text-accent-secondary mt-0.5">
                         {((displayData[hoveredIndex].value / Math.max(values.reduce((a, b) => a + b, 0), 1)) * 100).toFixed(1)}%
                       </span>
                     )}
@@ -576,13 +655,208 @@ export default function DataVisualizer({ rows, insights }: DataVisualizerProps) 
                 </div>
               </div>
             )}
+
+            {/* AREA CHART */}
+            {activeTab === 'area' && (
+              <svg viewBox="0 0 500 240" className="w-full h-full">
+                <defs>
+                  <linearGradient id="areaGradOnly" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#00f2ff" stopOpacity="0.35" />
+                    <stop offset="100%" stopColor="#00f2ff" stopOpacity="0.0" />
+                  </linearGradient>
+                  <linearGradient id="areaLineGrad" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor="#00f2ff" />
+                    <stop offset="100%" stopColor="#6366f1" />
+                  </linearGradient>
+                </defs>
+
+                {/* Grid Lines */}
+                {[0, 0.25, 0.5, 0.75, 1].map((ratio, idx) => {
+                  const y = 20 + ratio * 170;
+                  const val = maxValue - ratio * (maxValue - minValue);
+                  return (
+                    <g key={idx}>
+                      <line x1="50" y1={y} x2="480" y2={y} stroke="rgba(255,255,255,0.03)" strokeDasharray="3,3" />
+                      <text x="40" y={y + 3} fill="#94a3b8" fontSize="8" textAnchor="end" fontFamily="monospace">
+                        {formatValue(val)}
+                      </text>
+                    </g>
+                  );
+                })}
+
+                {/* Area and Line */}
+                {(() => {
+                  const points = displayData.map((d, i) => {
+                    const count = displayData.length;
+                    const w = 400 / (count > 1 ? count - 1 : 1);
+                    const x = 60 + i * w;
+                    
+                    const yRatio = maxValue - minValue > 0 ? (d.value - minValue) / (maxValue - minValue) : 0;
+                    const y = 190 - yRatio * 170;
+                    return { x, y };
+                  });
+
+                  if (points.length === 0) return null;
+
+                  const linePath = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+                  const areaPath = `${linePath} L ${points[points.length - 1].x} 190 L ${points[0].x} 190 Z`;
+
+                  return (
+                    <g>
+                      <path d={areaPath} fill="url(#areaGradOnly)" />
+                      <path d={linePath} fill="none" stroke="url(#areaLineGrad)" strokeWidth="2.5" strokeLinecap="round" />
+
+                      {displayData.map((d, i) => {
+                        const pt = points[i];
+                        const isHovered = hoveredIndex === i;
+
+                        return (
+                          <g 
+                            key={i}
+                            onMouseEnter={() => setHoveredIndex(i)}
+                            onMouseLeave={() => setHoveredIndex(null)}
+                            className="cursor-pointer"
+                          >
+                            <circle
+                              cx={pt.x}
+                              cy={pt.y}
+                              r={isHovered ? 6 : 4}
+                              fill={isHovered ? "#00f2ff" : "#6366f1"}
+                              stroke="#050508"
+                              strokeWidth="1.5"
+                            />
+
+                            {isHovered && (
+                              <g>
+                                <rect
+                                  x={Math.max(50, pt.x - 50)}
+                                  y={Math.max(5, pt.y - 28)}
+                                  width="100"
+                                  height="20"
+                                  rx="4"
+                                  fill="#050508"
+                                  stroke="#00f2ff"
+                                  strokeWidth="1"
+                                />
+                                <text
+                                  x={Math.max(50, pt.x - 50) + 50}
+                                  y={Math.max(5, pt.y - 28) + 12}
+                                  fill="#fff"
+                                  fontSize="8"
+                                  fontWeight="bold"
+                                  textAnchor="middle"
+                                >
+                                  {formatValue(d.value)}
+                                </text>
+                              </g>
+                            )}
+
+                            <text
+                              x={pt.x}
+                              y="208"
+                              fill={isHovered ? "#fff" : "#94a3b8"}
+                              fontSize="8"
+                              textAnchor="middle"
+                              transform={`rotate(-20, ${pt.x}, 208)`}
+                            >
+                              {d.label.length > 10 ? d.label.substring(0, 8) + '..' : d.label}
+                            </text>
+                          </g>
+                        );
+                      })}
+                    </g>
+                  );
+                })()}
+                <line x1="50" y1="190" x2="480" y2="190" stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
+              </svg>
+            )}
+
+            {/* KPI CARD */}
+            {activeTab === 'kpi' && (
+              <div className="flex flex-col items-center justify-center h-full w-full p-6 text-center bg-gradient-to-br from-accent/5 to-accent-secondary/5 rounded-xl border border-white/5 relative overflow-hidden select-none">
+                <div className="absolute -right-10 -top-10 w-32 h-32 bg-accent/5 rounded-full blur-xl" />
+                <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted mb-2">
+                  {keys.yKey.replace(/_/g, ' ') || 'Metric Value'}
+                </span>
+                <span className="text-4xl font-extrabold text-white tracking-tight font-mono bg-gradient-to-r from-white via-cyan-100 to-accent bg-clip-text text-transparent drop-shadow-md">
+                  {formatValue(
+                    chartData.length === 1 
+                      ? chartData[0].value 
+                      : chartData.reduce((acc, curr) => acc + curr.value, 0)
+                  )}
+                </span>
+                {chartData.length > 1 && (
+                  <span className="text-[10px] text-text-muted mt-2">
+                    Sum of {chartData.length} records • Average: {formatValue(chartData.reduce((acc, curr) => acc + curr.value, 0) / chartData.length)}
+                  </span>
+                )}
+                {chartData.length === 1 && chartData[0].label && (
+                  <span className="text-[10px] text-text-muted mt-2">
+                    Ref: {chartData[0].label}
+                  </span>
+                )}
+              </div>
+            )}
+
+            {/* HEATMAP GRID */}
+            {activeTab === 'heatmap' && (
+              <div className="w-full h-full flex flex-col justify-center p-2">
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-56 overflow-y-auto pr-2">
+                  {displayData.map((d, i) => {
+                    const ratio = maxValue > 0 ? d.value / maxValue : 0;
+                    return (
+                      <div
+                        key={i}
+                        className="p-3 rounded-lg border border-white/5 flex flex-col justify-between h-20 transition-all duration-200 hover:scale-[1.02]"
+                        style={{
+                          background: `linear-gradient(135deg, rgba(99, 102, 241, ${0.1 + ratio * 0.4}) 0%, rgba(0, 242, 255, ${ratio * 0.3}) 100%)`,
+                          boxShadow: ratio > 0.7 ? '0 0 10px rgba(0, 242, 255, 0.15)' : 'none',
+                        }}
+                      >
+                        <span className="text-[9px] font-bold text-text-muted truncate select-none">{d.label}</span>
+                        <div className="flex items-baseline justify-between mt-1">
+                          <span className="text-xs font-bold text-white font-mono">{formatValue(d.value)}</span>
+                          <span className="text-[8px] font-semibold text-accent" style={{ opacity: 0.5 + ratio * 0.5 }}>
+                            {Math.round(ratio * 100)}%
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* COMPACT TABLE */}
+            {activeTab === 'table' && (
+              <div className="w-full h-full overflow-hidden border border-white/5 rounded-lg bg-card-bg/25 backdrop-blur-md flex flex-col">
+                <div className="overflow-y-auto max-h-56 w-full pr-1">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-white/5 bg-white/2 select-none">
+                        <th className="py-2 px-3 text-[9px] font-bold text-text-muted uppercase tracking-wider">{keys.xKey.replace(/_/g, ' ')}</th>
+                        <th className="py-2 px-3 text-[9px] font-bold text-text-muted uppercase tracking-wider text-right">{keys.yKey.replace(/_/g, ' ')}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {displayData.map((d, i) => (
+                        <tr key={i} className="border-b border-white/5 hover:bg-white/3 transition-colors">
+                          <td className="py-2 px-3 text-[10px] text-foreground font-medium truncate max-w-[200px]">{d.label}</td>
+                          <td className="py-2 px-3 text-[10px] text-accent font-bold font-mono text-right">{formatValue(d.value)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
           </div>
           
           {/* Info footnote */}
           {chartData.length > displayData.length && (
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded bg-white/2 border border-white/5 text-[9px] text-text-muted">
-              <HelpCircle size={10} />
-              <span>Showing top {displayData.length} records. Inspect the full result set in the data table below.</span>
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded bg-white/2 border border-white/5 text-[9px] text-text-muted select-none">
+              <HelpCircle size={10} className="text-accent" />
+              <span>Showing top {displayData.length} records. Inspect the full result set in the raw data table tab.</span>
             </div>
           )}
         </div>
