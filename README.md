@@ -135,7 +135,7 @@ Below is the database structure. It maps user authorization, query history, and 
 erDiagram
     app_users {
         int id PK
-        string username UNIQUE
+        string username
         string password_hash
         string role
     }
